@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"  type ="text/css" href="css/stylesheet.css" media = "screen">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" 
+crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" 
+integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+ crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+ crossorigin="anonymous"></script>
+
+
+ <!-- Load D3-->
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+
+    <title>Mobile Viz Hub</title>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">Mobile Visualizations</a>
+          </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="index.html">Home</a></li>
+            <li><a href="line.html">Interactive Line Graph</a></li>
+            <li><a href="Line Chart.html">Line Chart</a></li>
+            <li><a href ="bar.html" >Bar Chart</a></li>
+            <li><a href ="sparklines.html" >Time Series</a></li>
+            <li><a href ="Evaluate.html" >Evaluate</a></li>
+          </ul>
+        </div>
+      </nav>
+
+    
+    </head>
+
+<body>
+
+    <!--- Pop Up box-->
+<script defer src = "script.js"></script>
+<div class = "form-row text-center">
+  <div class = "col-12">
+<button class = "btn btn-info" id = "myBtn"> Click for Instructions </button>
+</div>
+</div>
+<div id ="myModal" class ="modal">
+
+    <div class = "modal-content">
+      <span class = "close">&times;</span>
+      <h4>Simple Bar Chart</h4>
+      <h5>A bar chart showing the change in price of Vitamin C supplements during the 2020 COVID-19 Pandemic</h5>
+      <p>List of Tasks for users to complete using the chart</p>
+      <p>1. On which dates did the largest change in price occur?</p>
+      <p>2. What was the largest percentage decrease that occured?</p>
+      <p>3. What was the average price change for Vitimin C over the 10 week period?</p>
+    </div>
+</div>
+
+
+<script>
+// set the margins , height and width
+var margin = {top: 20, right: 20, bottom: 70, left: 40},
+    width = 700 - margin.left - margin.right,
+    height = 425 - margin.top - margin.bottom;
+
+//format date
+var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+
+var y = d3.scale.linear().range([height, 10]);
+
+var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .tickFormat(d3.time.format("%Y-%m-%d"));
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(25);
+
+var svg = d3.select("body").append("svg")
+.attr("viewBox", "-40 -40 1200 800" )
+    //.attr("width", width + margin.left + margin.right)
+    //.attr("height", height + margin.top + margin.bottom)
+.append("g")
+    .attr("transform", 
+         "translate(" + margin.left + "," + margin.top + ")");
+        
+d3.csv("spark.csv" , function(error, data) {
+
+    data.forEach(function(d) {
+        d.date = parseDate(d.date);
+        d.value = +d.value;
+    });
+
+    x.domain(data.map(function(d) { return d.date; }));
+    y.domain([92, d3.max(data, function(d) { return d.value;})]);
+
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+    .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", "-.55em")
+        .attr("transform", "rotate(-90)");
+
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+    .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Value ($)");
+
+    svg.selectAll("bar")
+        .data(data)
+    .enter().append("rect")
+        .style("fill", "steelblue")
+        .attr("x", function(d) { return x(d.date); })
+        .attr("width", x.rangeBand())
+        .attr("y", function(d) { return y(d.value); })
+        .attr("height", function(d) { return height - y(d.value); });
+        
+
+
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
