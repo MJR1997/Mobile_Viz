@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"  type ="text/css" href="css/stylesheet.css" media = "screen">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" 
+crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" 
+integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+ crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" 
+integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+ crossorigin="anonymous"></script>
+
+ 
+
+ <!-- Load D3-->
+ <script src="https://d3js.org/d3.v4.js"></script>
+
+    <title>Mobile Viz Hub</title>
+
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand" href="#">Mobile Visualizations</a>
+          </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="index.html">Home</a></li>
+            <li><a href="line.html">Interactive Line Graph</a></li>
+            <li><a href="Line Chart.html">Line Chart</a></li>
+            <li><a href ="bar.html" >Bar Chart</a></li>
+            <li><a href ="sparklines.html" >Time Series</a></li>
+            <li><a href ="Evaluate.html" >Evaluate</a></li>
+          </ul>
+        </div>
+      </nav>
+    </head>
+
+
+<body>
+
+<!--- Pop Up box-->
+<script defer src = "script.js"></script>
+<div class = "form-row text-center">
+  <div class = "col-12">
+<button class = "btn btn-info" id = "myBtn"> Click for Instructions </button>
+</div>
+</div>
+<div id ="myModal" class ="modal">
+
+    <div class = "modal-content">
+      <span class = "close">&times;</span>
+      <h4>Interactive Line Chart</h4>
+      <h5>Line graph showing the change in price of items online during the 2020 COVID-19 pandemic</h5>
+      <p>List of Tasks for users to complete using the chart</p>
+      <p>1. On week 8 what was the percentage increase or decrease of product C?</p>
+      <p>2. What product had the single largest increase in price over the 10 week period?</p>
+      <p>3. Which products price changed the least during the 10 week period?</p>
+    </div>
+</div>
+
+<p> </p>
+
+
+
+    
+    <select  class ="form-control"  id="selectButton"></select>
+    <div id="viz_1"></div>
+
+        <!-- Color Scale -->
+            <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 100, bottom: 30, left: 30},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the div
+var svg = d3.select("#viz_1")
+  .append("svg")
+    .attr("viewBox", "-40 -40 1200 800" )
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+//Read the data
+d3.csv("prices.csv", function(data) {
+
+    // List of groups 
+    var allGroup = ["productA", "productB", "productC", "productD"]
+
+    // add the options to the button
+    d3.select("#selectButton")
+      .selectAll('myOptions')
+     	.data(allGroup)
+      .enter()
+    	.append('option')
+      .text(function (d) { return d; }) // text showen in drop down menu
+      .attr("value", function (d) { return d; }) // corresponding value returned by the button
+
+    // color scale 
+    var myColor = d3.scaleOrdinal()
+      .domain(allGroup)
+      .range(d3.schemeSet2);
+
+    // Add X axis 
+    var x_1 = d3.scaleLinear()
+      .domain([1,10])
+      .range([ 0, width ]);
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x_1));
+
+    // Add Y axis
+    var y_1 = d3.scaleLinear()
+      .domain( [90,110])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y_1));
+
+    // Initialize line with first group
+    var line = svg
+      .append('g')
+      .append("path")
+        .datum(data)
+        .attr("d", d3.line()
+          .x(function(d) { return x_1(+d.week) })
+          .y(function(d) { return y_1(+d.productA) })
+        )
+        .attr("stroke", function(d){ return myColor("productA") })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+
+    // function that updates the chart
+    function update(selectedGroup) {
+
+      // Create new data with selection
+      var dataFilter = data.map(function(d){return {week: d.week, product:d[selectedGroup]} })
+
+      // Give these new data to update line
+      line
+          .datum(dataFilter)
+          .transition()
+          .duration(1000)
+          .attr("d", d3.line()
+            .x(function(d) { return x_1(+d.week) })
+            .y(function(d) { return y_1(+d.product) })
+          )
+          .attr("stroke", function(d){ return myColor(selectedGroup) })
+    }
+
+    // When the button is used, run the updateChart function
+    d3.select("#selectButton").on("change", function(d) {
+        // recover the option that has been chosen
+        var selectedOption = d3.select(this).property("value")
+        // run the updateChart function with this selected option
+        update(selectedOption)
+    })
+})
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
